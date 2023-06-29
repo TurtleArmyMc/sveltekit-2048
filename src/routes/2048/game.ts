@@ -13,19 +13,21 @@ export class Game {
     board: number[][];
     prevBoard: number[][];
     /** How far the tile that was in this position moved away (in tiles) */
-    // moveAwayDistance: number[][];
-    // /** How far the tile that was in this position moved away (in tiles) */
-    // moveToDistance: number[][];
-
+    moveAwayDistance: number[][];
+    /** How far the tile that is now in this position moved to get here (in tiles) */
+    moveToDistance: number[][];
+    prevMove: Move | undefined;
 
     constructor() {
         this.board = [];
         this.prevBoard = [];
-        // this.moveAwayDistance = [];
+        this.moveAwayDistance = [];
+        this.moveToDistance = [];
         for (let i = 0; i < n; i++) {
             this.board.push(Array(n).fill(0));
             this.prevBoard.push(Array(n).fill(0));
-            // this.moveAwayDistance.push(Array(n).fill(0));
+            this.moveAwayDistance.push(Array(n).fill(0));
+            this.moveToDistance.push(Array(n).fill(0));
         }
         this.spawnNewTile();
     }
@@ -62,12 +64,13 @@ export class Game {
             return false;
         }
 
+        this.prevMove = move;
         this.setPrevBoard();
 
         if (move == "up") {
-            for (let ri = 1; ri < n; ri++) {
+            for (let c = 0; c < n; c++) {
                 let mergedLast = false;
-                for (let c = 0; c < n; c++) {
+                for (let ri = 1; ri < n; ri++) {
                     const v = this.board[ri][c];
                     this.board[ri][c] = 0;
                     let rf = ri;
@@ -85,9 +88,9 @@ export class Game {
                 }
             }
         } else if (move == "down") {
-            for (let ri = n - 2; ri >= 0; ri--) {
+            for (let c = 0; c < n; c++) {
                 let mergedLast = false;
-                for (let c = 0; c < n; c++) {
+                for (let ri = n - 2; ri >= 0; ri--) {
                     const v = this.board[ri][c];
                     this.board[ri][c] = 0;
                     let rf = ri;

@@ -51,7 +51,7 @@
     {#each board as row}
         <div class="row">
             {#each row as e}
-                <div class="cell">
+                <!-- <div class="cell">
                     <div
                         class={"visible_cell" +
                             (e < COLOR_CLASSES.length
@@ -60,6 +60,14 @@
                     >
                         {e ? 2 ** e : ""}
                     </div>
+                </div> -->
+                <div
+                    class={"cell " +
+                        (e < COLOR_CLASSES.length
+                            ? COLOR_CLASSES[e]
+                            : "cell_big")}
+                >
+                    {e ? 2 ** e : ""}
                 </div>
             {/each}
         </div>
