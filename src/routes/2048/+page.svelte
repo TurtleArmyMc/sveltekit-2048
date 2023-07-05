@@ -1,12 +1,16 @@
 <script lang="ts">
-    import Cell from "./Cell.svelte";
     import { onMount } from "svelte";
-    import { Game } from "./game";
+    import { tweened } from "svelte/motion";
+    import { cubicIn } from "svelte/easing";
+
+    import Cell from "./Cell.svelte";
+    import { Game, moveOffset } from "./game";
 
     let game = new Game();
-    $: board = game.board;
-    $: moveAway = game.moveAwayDistance;
-    $: moveTo = game.moveToDistance;
+    const animProgress = tweened(1, {
+        duration: 40,
+        easing: cubicIn,
+    });
 
     onMount(() => {
         game.spawnNewTile();
@@ -14,19 +18,26 @@
     });
 
     function keydown(event: KeyboardEvent) {
+        let newGame = undefined;
         switch (event.key) {
             case "ArrowDown":
-                game = game.makeMove("down") ?? game;
+                newGame = game.makeMove("down");
                 break;
             case "ArrowUp":
-                game = game.makeMove("up") ?? game;
+                newGame = game.makeMove("up");
                 break;
             case "ArrowLeft":
-                game = game.makeMove("left") ?? game;
+                newGame = game.makeMove("left");
                 break;
             case "ArrowRight":
-                game = game.makeMove("right") ?? game;
+                newGame = game.makeMove("right");
                 break;
+        }
+        console.log(newGame);
+        if (newGame !== undefined) {
+            game = newGame;
+            animProgress.set(0, { duration: 0 });
+            $animProgress = 1;
         }
     }
 </script>
@@ -37,57 +48,35 @@
 <br />
 
 <div class="board">
-    {#each board as row, r}
+    {#each game.board as row, r}
+        {@const [rOffsetMult, cOffsetMult] = moveOffset(game.prevMove)}
+        {@const tilesMoved = $animProgress * game.n}
+        {@const rTilesMoved = tilesMoved * rOffsetMult}
+        {@const cTilesMoved = tilesMoved * cOffsetMult}
         <div class="row">
-            {#each row as e, c}
-                <div class="cell">
-                    {#if e}
-                        <Cell val={e} x={-20} y={-20} />
-                        <!-- <Cell val={e} /> -->
-                        <Cell val={e} />
-                    {/if}
-                </div>
-                <!-- <div
-                    class="cell {e < COLOR_CLASSES.length
-                        ? COLOR_CLASSES[e]
-                        : 'cell_big'}"
-                >
-                    {e ? 2 ** e : ""}
-                </div> -->
-            {/each}
-        </div>
-    {/each}
+            {#each row as cellVal, c}
+                {@const arriveDist = game.arriveDist[r][c]}
+                {@const sendDist = game.sendDist[r][c]}
+                {@const prevVal = game.prevBoard[r][c]}
+                {@const CELL_SIZE = 50}
 
-    <br>
-
-    <p>Away:</p>
-    {#each moveAway as row}
-        <div class="row">
-            {#each row as e}
                 <div class="cell">
-                    {#if e}
-                        <div>{e}</div>
-                    {/if}
+                    <!-- Local cell -->
+                    <Cell
+                        val={cellVal}
+                        hidden={cellVal == 0 || tilesMoved < arriveDist}
+                    />
+                    <!-- Old, moving cell -->
+                    <Cell
+                        val={prevVal}
+                        x={CELL_SIZE * cTilesMoved}
+                        y={CELL_SIZE * rTilesMoved}
+                        hidden={prevVal == 0 || tilesMoved >= sendDist}
+                    />
                 </div>
             {/each}
         </div>
     {/each}
-
-    <br>
-
-    <p>To:</p>
-    {#each moveTo as row}
-    <div class="row">
-        {#each row as e}
-            <div class="cell">
-                {#if e}
-                    <div>{e}</div>
-                {/if}
-            </div>
-        {/each}
-    </div>
-{/each}
-
 </div>
 
 <style>

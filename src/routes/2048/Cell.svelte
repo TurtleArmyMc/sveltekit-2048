@@ -2,6 +2,7 @@
     export let val: number;
     export let x: number = 0;
     export let y: number = 0;
+    export let hidden: boolean = false;
 
     const COLOR_CLASSES = [
         "",
@@ -21,6 +22,7 @@
 
 <div
     class={val < COLOR_CLASSES.length ? COLOR_CLASSES[val] : "cell_big"}
+    class:hidden
     style="transform: translate({x}%, {y}%);"
 >
     {val ? 2 ** val : ""}
@@ -33,6 +35,10 @@
         top: 0px;
         left: 0px;
         position: absolute;
+    }
+
+    .hidden {
+        visibility: hidden;
     }
 
     .cell2 {

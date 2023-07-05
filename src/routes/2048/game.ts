@@ -1,5 +1,3 @@
-export const n: number = 4;
-
 export type Move = "up" | "down" | "left" | "right";
 
 
@@ -10,39 +8,42 @@ export function moveOffset(move: Move): [number, number] {
 }
 
 export class Game {
+    n: number;
     board: number[][];
     prevBoard: number[][];
     /** How far the tile that was in this position moved away (in tiles) */
-    moveAwayDistance: number[][];
+    sendDist: number[][];
     /** How far the tile that is now in this position moved to get here (in tiles) */
-    moveToDistance: number[][];
-    prevMove: Move | undefined;
+    arriveDist: number[][];
+    prevMove: Move;
 
-    constructor() {
+    constructor(n: number = 4) {
+        this.n = n;
         this.board = [];
         this.prevBoard = [];
-        this.moveAwayDistance = [];
-        this.moveToDistance = [];
+        this.sendDist = [];
+        this.arriveDist = [];
         for (let i = 0; i < n; i++) {
             this.board.push(Array(n).fill(0));
             this.prevBoard.push(Array(n).fill(0));
-            this.moveAwayDistance.push(Array(n).fill(0));
-            this.moveToDistance.push(Array(n).fill(0));
+            this.sendDist.push(Array(n).fill(0));
+            this.arriveDist.push(Array(n).fill(0));
         }
+        this.prevMove = "up";
     }
 
     moveIsValid(move: Move) {
         const [rOffset, cOffset] = moveOffset(move);
 
-        for (let r = 0; r < n; r++) {
-            for (let c = 0; c < n; c++) {
+        for (let r = 0; r < this.n; r++) {
+            for (let c = 0; c < this.n; c++) {
                 const v = this.board[r][c];
                 if (v == 0) {
                     continue;
                 }
                 const r2 = r + rOffset;
                 const c2 = c + cOffset;
-                if (0 <= r2 && 0 <= c2 && r2 < n && c2 < n) {
+                if (0 <= r2 && 0 <= c2 && r2 < this.n && c2 < this.n) {
                     // A tile that is empty or can be combined in the direction
                     // of the move with the current tile
                     if (this.board[r2][c2] == v || this.board[r2][c2] == 0) {
@@ -64,8 +65,8 @@ export class Game {
         }
 
         const newGame = new Game();
-        for (let r = 0; r < n; r++) {
-            for (let c = 0; c < n; c++) {
+        for (let r = 0; r < this.n; r++) {
+            for (let c = 0; c < this.n; c++) {
                 newGame.board[r][c] = this.board[r][c];
                 newGame.prevBoard[r][c] = this.board[r][c];
             }
@@ -80,9 +81,9 @@ export class Game {
 
     private moveTiles(move: Move) {
         if (move == "up") {
-            for (let c = 0; c < n; c++) {
+            for (let c = 0; c < this.n; c++) {
                 let mergedLast = false;
-                for (let ri = 0; ri < n; ri++) {
+                for (let ri = 0; ri < this.n; ri++) {
                     let v = this.board[ri][c];
                     if (!v) continue; // Skip blank tiles
 
@@ -100,24 +101,24 @@ export class Game {
                         mergedLast = false;
                     }
                     this.board[rf][c] = v;
-                    this.moveAwayDistance[ri][c] = ri - rf;
-                    this.moveToDistance[rf][c] = ri - rf;
+                    this.sendDist[ri][c] = ri - rf;
+                    this.arriveDist[rf][c] = ri - rf;
                 }
             }
         } else if (move == "down") {
-            for (let c = 0; c < n; c++) {
+            for (let c = 0; c < this.n; c++) {
                 let mergedLast = false;
-                for (let ri = n - 1; ri >= 0; ri--) {
+                for (let ri = this.n - 1; ri >= 0; ri--) {
                     let v = this.board[ri][c];
                     if (!v) continue; // Skip blank tiles
 
                     this.board[ri][c] = 0;
                     let rf = ri;
-                    while (rf < n - 1 && this.board[rf + 1][c] == 0) {
+                    while (rf < this.n - 1 && this.board[rf + 1][c] == 0) {
                         rf++;
                     }
 
-                    if (rf < n - 1 && this.board[rf + 1][c] == v && !mergedLast) {
+                    if (rf < this.n - 1 && this.board[rf + 1][c] == v && !mergedLast) {
                         rf++;
                         v++;
                         mergedLast = true;
@@ -125,14 +126,14 @@ export class Game {
                         mergedLast = false;
                     }
                     this.board[rf][c] = v;
-                    this.moveAwayDistance[ri][c] = rf - ri;
-                    this.moveToDistance[rf][c] = rf - ri;
+                    this.sendDist[ri][c] = rf - ri;
+                    this.arriveDist[rf][c] = rf - ri;
                 }
             }
         } else if (move == "left") {
-            for (let r = 0; r < n; r++) {
+            for (let r = 0; r < this.n; r++) {
                 let mergedLast = false;
-                for (let ci = 0; ci < n; ci++) {
+                for (let ci = 0; ci < this.n; ci++) {
                     let v = this.board[r][ci];
                     if (!v) continue; // Skip blank tiles
 
@@ -150,24 +151,24 @@ export class Game {
                         mergedLast = false;
                     }
                     this.board[r][cf] = v;
-                    this.moveAwayDistance[r][ci] = ci - cf;
-                    this.moveToDistance[r][cf] = ci - cf;
+                    this.sendDist[r][ci] = ci - cf;
+                    this.arriveDist[r][cf] = ci - cf;
                 }
             }
         } else if (move == "right") {
-            for (let r = 0; r < n; r++) {
+            for (let r = 0; r < this.n; r++) {
                 let mergedLast = false;
-                for (let ci = n - 1; ci >= 0; ci--) {
+                for (let ci = this.n - 1; ci >= 0; ci--) {
                     let v = this.board[r][ci];
                     if (!v) continue; // Skip blank tiles
 
                     this.board[r][ci] = 0;
                     let cf = ci;
-                    while (cf < n - 1 && this.board[r][cf + 1] == 0) {
+                    while (cf < this.n - 1 && this.board[r][cf + 1] == 0) {
                         cf++;
                     }
 
-                    if (cf < n - 1 && this.board[r][cf + 1] == v && !mergedLast) {
+                    if (cf < this.n - 1 && this.board[r][cf + 1] == v && !mergedLast) {
                         cf++;
                         v++;
                         mergedLast = true;
@@ -175,8 +176,8 @@ export class Game {
                         mergedLast = false;
                     }
                     this.board[r][cf] = v;
-                    this.moveAwayDistance[r][ci] = cf - ci;
-                    this.moveToDistance[r][cf] = cf - ci;
+                    this.sendDist[r][ci] = cf - ci;
+                    this.arriveDist[r][cf] = cf - ci;
                 }
             }
         }
@@ -186,8 +187,8 @@ export class Game {
     spawnNewTile(): boolean {
         const blankCoords: [number, number][] = [];
 
-        for (let r = 0; r < n; r++) {
-            for (let c = 0; c < n; c++) {
+        for (let r = 0; r < this.n; r++) {
+            for (let c = 0; c < this.n; c++) {
                 if (this.board[r][c] == 0) {
                     blankCoords.push([r, c]);
                 }
