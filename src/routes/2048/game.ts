@@ -197,9 +197,9 @@ export class Game {
 
         if (blankCoords.length) {
             const [r, c] = blankCoords[Math.floor(Math.random() * blankCoords.length)];
-            // TODO: Should also sometimes be a 4
-            this.board[r][c] = 1; // Spawn a 2
-
+            // 90% chance of spawning a 2, with a 10% chance of spawning a 4
+            const val = Math.random() < 0.9 ? 1 : 2;
+            this.board[r][c] = val;
             return true;
         }
 
