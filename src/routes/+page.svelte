@@ -1,59 +1,214 @@
-<script>
-	import Counter from './Counter.svelte';
-	import welcome from '$lib/images/svelte-welcome.webp';
-	import welcome_fallback from '$lib/images/svelte-welcome.png';
+<script lang="ts">
+    import { onMount } from "svelte";
+    import { tweened } from "svelte/motion";
+    import { cubicIn } from "svelte/easing";
+    import { fade, scale } from "svelte/transition";
+    import { browser } from "$app/environment";
+    import { Game, moveOffset } from "./game";
+
+    let game = new Game();
+    const animProgress = tweened(1, {
+        duration: 70,
+        easing: cubicIn,
+    });
+    $: lost =
+        !game.moveIsValid("up") &&
+        !game.moveIsValid("down") &&
+        !game.moveIsValid("left") &&
+        !game.moveIsValid("right");
+
+    onMount(() => {
+        game.spawnNewTile();
+        game = game;
+    });
+
+    function keydown(event: KeyboardEvent) {
+        let newGame = undefined;
+        switch (event.key) {
+            case "ArrowDown":
+                newGame = game.makeMove("down");
+                break;
+            case "ArrowUp":
+                newGame = game.makeMove("up");
+                break;
+            case "ArrowLeft":
+                newGame = game.makeMove("left");
+                break;
+            case "ArrowRight":
+                newGame = game.makeMove("right");
+                break;
+        }
+        if (newGame !== undefined) {
+            game = newGame;
+            animProgress.set(0, { duration: 0 });
+            $animProgress = 1;
+        }
+    }
+
+    const TRANSLATE_MULT = (1 + 2 / 12) * 100;
 </script>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-</svelte:head>
+<svelte:window on:keydown={keydown} />
 
-<section>
-	<h1>
-		<span class="welcome">
-			<picture>
-				<source srcset={welcome} type="image/webp" />
-				<img src={welcome_fallback} alt="Welcome" />
-			</picture>
-		</span>
+<div class="game_wrapper">
+    <div class="board">
+        {#each game.board as row, r}
+            {@const [rOffsetMult, cOffsetMult] = moveOffset(game.prevMove)}
+            {@const tilesMoved = $animProgress * game.n}
+            {@const rTilesMoved = tilesMoved * rOffsetMult}
+            {@const cTilesMoved = tilesMoved * cOffsetMult}
+            <div class="row">
+                {#each row as tileVal, c}
+                    {@const arriveDist = game.arriveDist[r][c]}
+                    {@const sendDist = game.sendDist[r][c]}
+                    {@const prevVal = game.prevBoard[r][c]}
 
-		to your new<br />SvelteKit app
-	</h1>
+                    <div class="board_cell">
+                        {#if tileVal != 0 && tilesMoved >= arriveDist}
+                            <!-- A tile that is in this position and has finished moving and being merged with -->
+                            <div
+                                class="tile tile{tileVal}"
+                                in:scale={{
+                                    duration: 100,
+                                    easing: (n) => -0.25 * n * (n - 1) + 1,
+                                }}
+                            >
+                                <!-- Current local tile -->
+                                {tileVal}
+                            </div>
+                        {:else if prevVal != 0 && sendDist == 0}
+                            <!-- A tile that was here and is waiting for the merge animation of the arriving tile -->
+                            <div class="tile tile{prevVal}">
+                                <!-- Previous tile waiting to get merged -->
+                                {prevVal}
+                            </div>
+                        {/if}
 
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
-
-	<Counter />
-</section>
+                        {#if prevVal != 0 && tilesMoved < sendDist}
+                            <!-- A tile that was moved away and is being animated moving -->
+                            <div
+                                class="tile tile{prevVal}"
+                                style="transform: translate({TRANSLATE_MULT *
+                                    cTilesMoved}%, {TRANSLATE_MULT *
+                                    rTilesMoved}%);"
+                            >
+                                <!-- Old, moving tile -->
+                                {prevVal}
+                            </div>
+                        {/if}
+                    </div>
+                {/each}
+            </div>
+        {/each}
+    </div>
+    {#if browser && lost}
+        <div class="loss_popup" in:fade><p>You lost!</p></div>
+    {/if}
+</div>
 
 <style>
-	section {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		flex: 0.6;
-	}
+    .game_wrapper {
+        position: relative;
+    }
 
-	h1 {
-		width: 100%;
-	}
+    .board {
+        width: max(80vmin, 160px);
+        height: max(80vmin, 160px);
+        padding: max(1vmin, 2px);
+        margin: auto;
+        border-radius: max(1vmin, 2px);
+        background-color: hsl(0, 5%, 62%);
+    }
 
-	.welcome {
-		display: block;
-		position: relative;
-		width: 100%;
-		height: 0;
-		padding: 0 0 calc(100% * 495 / 2048) 0;
-	}
+    .loss_popup {
+        background-color: #a0808080;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0px;
+        left: 0px;
+    }
 
-	.welcome img {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		top: 0;
-		display: block;
-	}
+    .loss_popup p {
+        position: absolute;
+        top: 50%;
+        text-align: center;
+    }
+
+    .row {
+        display: flex;
+    }
+
+    .board_cell {
+        height: max(18vmin, 36px);
+        width: max(18vmin, 36px);
+        margin: max(1vmin, 2px);
+        padding: 0px;
+        border-radius: max(1vmin, 2px);
+        background: #b3a9a9;
+        position: relative;
+    }
+
+    .tile {
+        height: 100%;
+        width: 100%;
+        top: 0px;
+        left: 0px;
+        border-radius: max(1vmin, 2px);
+        position: absolute;
+        color: white;
+        text-align: center;
+        font-size: max(9vmin, 18px);
+        line-height: 200%;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+    }
+
+    .tile2 {
+        background: #eee4da;
+        color: black;
+    }
+    .tile4 {
+        background: #ece0c3;
+        color: black;
+    }
+    .tile8 {
+        background: #feb588;
+    }
+    .tile16 {
+        background: #f79663;
+    }
+    .tile32 {
+        background: #f77d63;
+    }
+    .tile64 {
+        background: #f76142;
+    }
+    .tile128 {
+        background: #efce73;
+    }
+    .tile256 {
+        background: #e6ca5b;
+    }
+    .tile512 {
+        background: #eeca52;
+    }
+    .tile1024 {
+        background: #eec642;
+    }
+    .tile2048 {
+        background: #e6be29;
+    }
+    .tile4096 {
+        background: #ef696b;
+    }
+    .tile8192 {
+        background: #e74d52;
+    }
+    .tile16384 {
+        background: #de413a;
+    }
+    .tile32768 {
+        background: #73b2d6;
+    }
 </style>

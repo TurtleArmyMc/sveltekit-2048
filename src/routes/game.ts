@@ -95,7 +95,7 @@ export class Game {
 
                     if (rf > 0 && this.board[rf - 1][c] == v && !mergedLast) {
                         rf--;
-                        v++;
+                        v *= 2;
                         mergedLast = true;
                     } else {
                         mergedLast = false;
@@ -120,7 +120,7 @@ export class Game {
 
                     if (rf < this.n - 1 && this.board[rf + 1][c] == v && !mergedLast) {
                         rf++;
-                        v++;
+                        v *= 2;
                         mergedLast = true;
                     } else {
                         mergedLast = false;
@@ -145,7 +145,7 @@ export class Game {
 
                     if (cf > 0 && this.board[r][cf - 1] == v && !mergedLast) {
                         cf--;
-                        v++;
+                        v *= 2;
                         mergedLast = true;
                     } else {
                         mergedLast = false;
@@ -170,7 +170,7 @@ export class Game {
 
                     if (cf < this.n - 1 && this.board[r][cf + 1] == v && !mergedLast) {
                         cf++;
-                        v++;
+                        v *= 2;
                         mergedLast = true;
                     } else {
                         mergedLast = false;
@@ -198,7 +198,7 @@ export class Game {
         if (blankCoords.length) {
             const [r, c] = blankCoords[Math.floor(Math.random() * blankCoords.length)];
             // 90% chance of spawning a 2, with a 10% chance of spawning a 4
-            const val = Math.random() < 0.9 ? 1 : 2;
+            const val = Math.random() < 0.9 ? 2 : 4;
             this.board[r][c] = val;
             return true;
         }
