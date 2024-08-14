@@ -80,6 +80,8 @@
     const TRANSLATE_MULT = 110;
 </script>
 
+<svelte:head><title>2048</title></svelte:head>
+
 <svelte:window on:keydown={keydown} />
 
 <svelte:document
@@ -202,8 +204,8 @@
         position: absolute;
         color: white;
         text-align: center;
-        font-size: max(9vmin, 18px);
-        line-height: 200%;
+        font-size: max(8vmin, 16px);
+        line-height: 210%;
         font-weight: bold;
         z-index: 1;
     }
