@@ -2,6 +2,8 @@
 
 A clone of [2048](https://github.com/gabrielecirulli/2048) in Sveltekit created to learn the framework.
 
+You can play it [here](https://2048.patryk.codes).
+
 ## Developing
 
 To start a development server:

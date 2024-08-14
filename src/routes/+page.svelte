@@ -3,24 +3,27 @@
     import { tweened } from "svelte/motion";
     import { cubicIn } from "svelte/easing";
     import { fade, scale } from "svelte/transition";
-    import { browser } from "$app/environment";
     import { Game, moveOffset, type Move } from "./game";
 
     let game = new Game();
+    let started = false;
     const animProgress = tweened(1, {
         duration: 70,
         easing: cubicIn,
     });
+    let lost = false;
     $: lost =
+        started &&
         !game.moveIsValid("up") &&
         !game.moveIsValid("down") &&
         !game.moveIsValid("left") &&
         !game.moveIsValid("right");
 
     function startGame() {
-        game = new Game();
-        game.spawnNewTile();
-        game = game;
+        started = true;
+        const newGame = new Game();
+        newGame.spawnNewTile();
+        game = newGame;
     }
 
     onMount(startGame);
@@ -145,7 +148,7 @@
             {/each}
         </div>
     {/each}
-    {#if browser && lost}
+    {#if lost}
         <div id="loss_popup" transition:fade>
             <p>Game<br />Over!</p>
             <button on:click={startGame}>
