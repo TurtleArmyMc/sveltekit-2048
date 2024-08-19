@@ -151,7 +151,7 @@
     {#if lost}
         <div id="loss_popup" transition:fade>
             <p>Game<br />Over!</p>
-            <button on:click={startGame}>
+            <button on:click={startGame} on:touchstart={startGame}>
                 <svg
                     height="0.5em"
                     width="0.5em"
